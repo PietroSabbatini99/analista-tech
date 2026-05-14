@@ -1,0 +1,12 @@
+.env
+.venv/
+*.db
+data/cache/
+data/*.log
+data/*.error.log
+reports/
+__pycache__/
+*.pyc
+.DS_Store
+.pytest_cache/
+gan-harness/

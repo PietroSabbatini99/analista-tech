@@ -1,0 +1,81 @@
+universe:
+  tickers:
+    - {ticker: NVDA, name: "NVIDIA", sector: chip}
+    - {ticker: AMD, name: "Advanced Micro Devices", sector: chip}
+    - {ticker: INTC, name: "Intel", sector: chip}
+    - {ticker: QCOM, name: "Qualcomm", sector: chip}
+    - {ticker: AVGO, name: "Broadcom", sector: chip}
+    - {ticker: MRVL, name: "Marvell Technology", sector: chip}
+    - {ticker: ARM, name: "Arm Holdings", sector: chip}
+    - {ticker: ALAB, name: "Astera Labs", sector: chip}
+    - {ticker: SMCI, name: "Super Micro Computer", sector: datacenter}
+    - {ticker: LSCC, name: "Lattice Semiconductor", sector: chip}
+    - {ticker: MCHP, name: "Microchip Technology", sector: chip}
+    - {ticker: "ON", name: "ON Semiconductor", sector: chip}
+    - {ticker: MPWR, name: "Monolithic Power", sector: chip}
+    - {ticker: CRUS, name: "Cirrus Logic", sector: chip}
+    - {ticker: SWKS, name: "Skyworks Solutions", sector: chip}
+    - {ticker: MTSI, name: "MACOM Technology", sector: chip}
+    - {ticker: MU, name: "Micron Technology", sector: memory}
+    - {ticker: WDC, name: "Western Digital", sector: memory}
+    - {ticker: STX, name: "Seagate Technology", sector: memory}
+    - {ticker: DELL, name: "Dell Technologies", sector: datacenter}
+    - {ticker: HPE, name: "HP Enterprise", sector: datacenter}
+    - {ticker: VRT, name: "Vertiv", sector: datacenter}
+    - {ticker: CDNS, name: "Cadence Design", sector: eda}
+    - {ticker: SNPS, name: "Synopsys", sector: eda}
+    - {ticker: MSFT, name: "Microsoft", sector: ai_software}
+    - {ticker: GOOGL, name: "Alphabet", sector: ai_software}
+    - {ticker: META, name: "Meta Platforms", sector: ai_software}
+    - {ticker: AMZN, name: "Amazon", sector: ai_software}
+    - {ticker: ORCL, name: "Oracle", sector: ai_software}
+    - {ticker: SNOW, name: "Snowflake", sector: ai_software}
+    - {ticker: PLTR, name: "Palantir", sector: ai_software}
+    - {ticker: AI, name: "C3.ai", sector: ai_software}
+    - {ticker: BBAI, name: "BigBear.ai", sector: ai_software}
+    - {ticker: SOUN, name: "SoundHound AI", sector: ai_software}
+    - {ticker: PATH, name: "UiPath", sector: ai_software}
+    - {ticker: GTLB, name: "GitLab", sector: ai_software}
+    - {ticker: MDB, name: "MongoDB", sector: ai_software}
+    - {ticker: NET, name: "Cloudflare", sector: ai_software}
+    - {ticker: DDOG, name: "Datadog", sector: ai_software}
+    - {ticker: CRWD, name: "CrowdStrike", sector: ai_software}
+    - {ticker: ANET, name: "Arista Networks", sector: networking}
+    - {ticker: AMAT, name: "Applied Materials", sector: equipment}
+    - {ticker: KLAC, name: "KLA Corporation", sector: equipment}
+    - {ticker: LRCX, name: "Lam Research", sector: equipment}
+    - {ticker: ASML, name: "ASML Holding", sector: equipment}
+    - {ticker: TER, name: "Teradyne", sector: equipment}
+    - {ticker: ETN, name: "Eaton", sector: power}
+    - {ticker: IONQ, name: "IonQ", sector: quantum}
+    - {ticker: RGTI, name: "Rigetti Computing", sector: quantum}
+
+alerts:
+  score_threshold: 75
+  score_spike: 15
+  partnership_instant: true
+  x_influencer_threshold: 3
+
+rss_feeds:
+  - url: "https://www.semianalysis.com/feed"
+    name: SemiAnalysis
+  - url: "https://feeds.feedburner.com/TechCrunch"
+    name: TechCrunch
+  - url: "https://feeds.reuters.com/reuters/technologyNews"
+    name: Reuters Tech
+  - url: "https://www.thechipletter.com/feed"
+    name: The Chip Letter
+
+x_accounts:
+  - jensen_huang
+  - sama
+  - satyanadella
+  - SemiAnalysis
+  - PatrickMoorhead
+  - DanIves_WA
+  - benedictevans
+  - TechCrunch
+  - mlpowered
+
+report:
+  weekly_email_day: monday
