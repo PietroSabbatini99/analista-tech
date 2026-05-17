@@ -168,6 +168,9 @@ def main():
         scored["tv_macd"]          = tv.get("macd", 0.0)
         scored["tv_ema_cross"]     = tv.get("ema_cross", 0.0)
         scored["tv_buy"]           = tv.get("buy", 0)
+        scored["cap_tier"]         = financial.get("cap_tier", "large")
+        scored["accumulation"]     = financial.get("accumulation", False)
+        scored["price_change_20"]  = financial.get("price_change_20", 0.0)
         scored["tv_sell"]          = tv.get("sell", 0)
         scored["earnings_history"] = financial.get("earnings_history", [])
 

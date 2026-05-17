@@ -37,15 +37,33 @@ def fetch_financial_snapshot(ticker: str) -> dict[str, Any]:
         avg_vol60 = vol.mean() if len(vol) < 60 else vol.iloc[-60:].mean()
         volume_spike = float((avg_vol20 - avg_vol60) / avg_vol60) if avg_vol60 else 0.0
 
+        # Accumulation: price flat (±5%) + volume spike >30% = smart money building
+        price_change_20 = float((close.iloc[-1] - close.iloc[-20]) / close.iloc[-20]) if len(close) >= 20 else 0.0
+        accumulation    = abs(price_change_20) <= 0.05 and volume_spike >= 0.30
+    else:
+        price_change_20 = 0.0
+        accumulation    = False
+
+    # Cap tier
+    if market_cap >= 10_000_000_000:
+        cap_tier = "large"
+    elif market_cap >= 1_000_000_000:
+        cap_tier = "mid"
+    else:
+        cap_tier = "small"
+
     return {
-        "ticker":         ticker,
-        "revenue_growth": revenue_growth,
-        "gross_margin":   gross_margin,
-        "total_cash":     total_cash,
-        "price_to_sales": price_to_sales,
-        "market_cap":     market_cap,
-        "momentum_20_60": momentum_20_60,
-        "volume_spike":   volume_spike,
+        "ticker":          ticker,
+        "revenue_growth":  revenue_growth,
+        "gross_margin":    gross_margin,
+        "total_cash":      total_cash,
+        "price_to_sales":  price_to_sales,
+        "market_cap":      market_cap,
+        "momentum_20_60":  momentum_20_60,
+        "volume_spike":    volume_spike,
+        "price_change_20": round(price_change_20, 4),
+        "accumulation":    accumulation,
+        "cap_tier":        cap_tier,
         "trailing_pe":    trailing_pe,
         "forward_pe":     forward_pe,
         "analyst_target": analyst_target,

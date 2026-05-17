@@ -23,8 +23,11 @@ FINANCIAL DATA:
 - Market Cap: ${market_cap:,.0f}
 - P/E Trailing: {trailing_pe:.1f}x (sector avg: {sector_avg_pe:.1f}x)
 - P/E Forward: {forward_pe:.1f}x
+- Cap Tier: {cap_tier}
 - Price Momentum (20d vs 60d avg): {momentum_20_60:+.1%}
+- Price Change (20d): {price_change_20:+.1%}
 - Volume Spike (20d vs 60d avg): {volume_spike:+.1%}
+- Accumulation Signal: {accumulation} (price flat + volume rising = smart money building)
 
 ANALYST CONSENSUS ({analyst_count} analysts):
 - Target Price: ${analyst_target:.2f} | Upside vs current: {analyst_upside:+.1f}%
@@ -104,8 +107,11 @@ def score_company(
         insider_filings_30d=financial.get("insider_filings_30d", 0),
         institutional_pct=financial.get("institutional_pct", 0.0),
         top_holder=financial.get("top_holder") or "N/A",
+        cap_tier=financial.get("cap_tier", "large"),
         momentum_20_60=financial["momentum_20_60"],
+        price_change_20=financial.get("price_change_20", 0.0),
         volume_spike=financial["volume_spike"],
+        accumulation=financial.get("accumulation", False),
         tv_recommendation=tv["recommendation"],
         tv_buy=tv["buy"],
         tv_sell=tv["sell"],

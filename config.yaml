@@ -49,6 +49,24 @@ universe:
     - {ticker: ETN, name: "Eaton", sector: power}
     - {ticker: IONQ, name: "IonQ", sector: quantum}
     - {ticker: RGTI, name: "Rigetti Computing", sector: quantum}
+    - {ticker: CEG, name: "Constellation Energy", sector: nuclear}
+    - {ticker: VST, name: "Vistra Energy", sector: nuclear}
+    - {ticker: SMR, name: "NuScale Power", sector: nuclear}
+    - {ticker: OKLO, name: "Oklo", sector: nuclear}
+    - {ticker: BWXT, name: "BWX Technologies", sector: nuclear}
+    - {ticker: COHR, name: "Coherent Corp", sector: optical}
+    - {ticker: CIEN, name: "Ciena", sector: optical}
+    - {ticker: LITE, name: "Lumentum", sector: optical}
+    - {ticker: ROK, name: "Rockwell Automation", sector: robotics}
+    - {ticker: CGNX, name: "Cognex", sector: robotics}
+    - {ticker: ISRG, name: "Intuitive Surgical", sector: robotics}
+    - {ticker: RXRX, name: "Recursion Pharmaceuticals", sector: ai_bio}
+    - {ticker: SDGR, name: "Schrodinger", sector: ai_bio}
+    - {ticker: ABCL, name: "AbCellera Biologics", sector: ai_bio}
+    - {ticker: CRWV, name: "CoreWeave", sector: gpu_cloud}
+    - {ticker: APLD, name: "Applied Digital", sector: gpu_cloud}
+    - {ticker: KTOS, name: "Kratos Defense", sector: defense_ai}
+    - {ticker: LDOS, name: "Leidos Holdings", sector: defense_ai}
 
 alerts:
   score_threshold: 75
