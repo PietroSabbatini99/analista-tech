@@ -19,16 +19,40 @@ def init_db(db_path: str) -> None:
         );
 
         CREATE TABLE IF NOT EXISTS daily_scores (
-            id                INTEGER PRIMARY KEY AUTOINCREMENT,
-            ticker            TEXT NOT NULL,
-            date              TEXT NOT NULL,
-            score_revenue     REAL,
-            score_margins     REAL,
-            score_news        REAL,
-            score_influencer  REAL,
-            score_momentum    REAL,
-            total_score       REAL,
-            narrative         TEXT,
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticker              TEXT NOT NULL,
+            date                TEXT NOT NULL,
+            score_revenue       REAL,
+            score_margins       REAL,
+            score_news          REAL,
+            score_influencer    REAL,
+            score_momentum      REAL,
+            total_score         REAL,
+            narrative           TEXT,
+            name                TEXT,
+            sector              TEXT,
+            cap_tier            TEXT,
+            accumulation        INTEGER DEFAULT 0,
+            price_change_20     REAL    DEFAULT 0,
+            trailing_pe         REAL    DEFAULT 0,
+            forward_pe          REAL    DEFAULT 0,
+            sector_avg_pe       REAL    DEFAULT 0,
+            analyst_target      REAL    DEFAULT 0,
+            analyst_upside      REAL    DEFAULT 0,
+            analyst_count       INTEGER DEFAULT 0,
+            short_percent       REAL    DEFAULT 0,
+            short_ratio         REAL    DEFAULT 0,
+            next_earnings       TEXT,
+            days_until_earnings INTEGER,
+            insider_filings_30d INTEGER DEFAULT 0,
+            institutional_pct   REAL    DEFAULT 0,
+            top_holder          TEXT,
+            tv_recommendation   TEXT,
+            tv_rsi              REAL    DEFAULT 50,
+            tv_macd             REAL    DEFAULT 0,
+            tv_ema_cross        REAL    DEFAULT 0,
+            tv_buy              INTEGER DEFAULT 0,
+            tv_sell             INTEGER DEFAULT 0,
             UNIQUE(ticker, date)
         );
 
@@ -58,5 +82,39 @@ def init_db(db_path: str) -> None:
         CREATE INDEX IF NOT EXISTS idx_alerts_date
             ON alerts(date);
     """)
+    conn.commit()
+
+    # Migrate existing DB — add new columns if missing
+    new_cols = [
+        ("name",                "TEXT"),
+        ("sector",              "TEXT"),
+        ("cap_tier",            "TEXT"),
+        ("accumulation",        "INTEGER DEFAULT 0"),
+        ("price_change_20",     "REAL DEFAULT 0"),
+        ("trailing_pe",         "REAL DEFAULT 0"),
+        ("forward_pe",          "REAL DEFAULT 0"),
+        ("sector_avg_pe",       "REAL DEFAULT 0"),
+        ("analyst_target",      "REAL DEFAULT 0"),
+        ("analyst_upside",      "REAL DEFAULT 0"),
+        ("analyst_count",       "INTEGER DEFAULT 0"),
+        ("short_percent",       "REAL DEFAULT 0"),
+        ("short_ratio",         "REAL DEFAULT 0"),
+        ("next_earnings",       "TEXT"),
+        ("days_until_earnings", "INTEGER"),
+        ("insider_filings_30d", "INTEGER DEFAULT 0"),
+        ("institutional_pct",   "REAL DEFAULT 0"),
+        ("top_holder",          "TEXT"),
+        ("tv_recommendation",   "TEXT"),
+        ("tv_rsi",              "REAL DEFAULT 50"),
+        ("tv_macd",             "REAL DEFAULT 0"),
+        ("tv_ema_cross",        "REAL DEFAULT 0"),
+        ("tv_buy",              "INTEGER DEFAULT 0"),
+        ("tv_sell",             "INTEGER DEFAULT 0"),
+    ]
+    for col, col_type in new_cols:
+        try:
+            conn.execute(f"ALTER TABLE daily_scores ADD COLUMN {col} {col_type}")
+        except Exception:
+            pass  # column already exists
     conn.commit()
     conn.close()

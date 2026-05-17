@@ -178,11 +178,32 @@ def main():
         conn.execute(
             """INSERT OR REPLACE INTO daily_scores
                (ticker,date,score_revenue,score_margins,score_news,
-                score_influencer,score_momentum,total_score,narrative)
-               VALUES (?,?,?,?,?,?,?,?,?)""",
-            (ticker, today, scored["score_revenue"], scored["score_margins"],
-             scored["score_news"], scored["score_influencer"], scored["score_momentum"],
-             scored["total_score"], scored.get("reasoning", "")),
+                score_influencer,score_momentum,total_score,narrative,
+                name,sector,cap_tier,accumulation,price_change_20,
+                trailing_pe,forward_pe,sector_avg_pe,
+                analyst_target,analyst_upside,analyst_count,
+                short_percent,short_ratio,next_earnings,days_until_earnings,
+                insider_filings_30d,institutional_pct,top_holder,
+                tv_recommendation,tv_rsi,tv_macd,tv_ema_cross,tv_buy,tv_sell)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (ticker, today,
+             scored["score_revenue"], scored["score_margins"], scored["score_news"],
+             scored["score_influencer"], scored["score_momentum"], scored["total_score"],
+             scored.get("reasoning", ""),
+             scored.get("name", ticker), scored.get("sector", "unknown"),
+             scored.get("cap_tier", "large"), int(scored.get("accumulation", False)),
+             scored.get("price_change_20", 0.0),
+             scored.get("trailing_pe", 0.0), scored.get("forward_pe", 0.0),
+             scored.get("sector_avg_pe", 0.0),
+             scored.get("analyst_target", 0.0), scored.get("analyst_upside", 0.0),
+             scored.get("analyst_count", 0),
+             scored.get("short_percent", 0.0), scored.get("short_ratio", 0.0),
+             scored.get("next_earnings", "N/A"), scored.get("days_until_earnings"),
+             scored.get("insider_filings_30d", 0), scored.get("institutional_pct", 0.0),
+             scored.get("top_holder", "N/A"),
+             scored.get("tv_recommendation", "N/A"), scored.get("tv_rsi", 50.0),
+             scored.get("tv_macd", 0.0), scored.get("tv_ema_cross", 0.0),
+             scored.get("tv_buy", 0), scored.get("tv_sell", 0)),
         )
         conn.commit()
         conn.close()
