@@ -1,8 +1,12 @@
+import json
+import subprocess
 import yfinance as yf
 import requests
-from tradingview_ta import TA_Handler, Interval
 from datetime import datetime, timedelta, timezone
 from typing import Any
+
+TV_CLI = "/Users/pietrosabbatini/go/bin/tradingview-pp-cli"
+YF_CLI = "/Users/pietrosabbatini/go/bin/yahoo-finance-pp-cli"
 
 
 def fetch_financial_snapshot(ticker: str) -> dict[str, Any]:
@@ -75,53 +79,65 @@ def fetch_financial_snapshot(ticker: str) -> dict[str, Any]:
 
 
 def fetch_tv_analysis(ticker: str) -> dict[str, Any]:
+    """Fetch TradingView TA via tradingview-pp-cli (replaces tradingview-ta Python library)."""
     try:
-        handler = TA_Handler(
-            symbol=ticker,
-            screener="america",
-            exchange="NASDAQ",
-            interval=Interval.INTERVAL_1_DAY,
+        result = subprocess.run(
+            [TV_CLI, "export", ticker, "--format", "analista", "--json"],
+            capture_output=True, text=True, timeout=20
         )
-        analysis = handler.get_analysis()
-        ind = analysis.indicators
-        ema20 = ind.get("EMA20") or 0
-        ema50 = ind.get("EMA50") or 0
-        return {
-            "recommendation": analysis.summary.get("RECOMMENDATION", "NEUTRAL"),
-            "buy":            analysis.summary.get("BUY", 0),
-            "sell":           analysis.summary.get("SELL", 0),
-            "neutral":        analysis.summary.get("NEUTRAL", 0),
-            "rsi":            round(ind.get("RSI") or 50, 2),
-            "macd":           round(ind.get("MACD.macd") or 0, 4),
-            "ema_cross":      round((ema20 - ema50) / ema50 * 100, 2) if ema50 else 0.0,
-        }
+        if result.returncode == 0 and result.stdout.strip():
+            data = json.loads(result.stdout)
+            if data:
+                d = data[0]
+                return {
+                    "recommendation": d.get("tv_recommendation", "NEUTRAL"),
+                    "buy":            d.get("tv_buy", 0),
+                    "sell":           d.get("tv_sell", 0),
+                    "neutral":        d.get("tv_neutral", 0),
+                    "rsi":            round(d.get("tv_rsi", 50.0), 2),
+                    "macd":           round(d.get("tv_macd", 0.0), 4),
+                    "ema_cross":      round(d.get("tv_ema_cross", 0.0), 2),
+                }
     except Exception:
-        try:
-            handler = TA_Handler(
-                symbol=ticker,
-                screener="america",
-                exchange="NYSE",
-                interval=Interval.INTERVAL_1_DAY,
-            )
-            analysis = handler.get_analysis()
-            ind = analysis.indicators
-            ema20 = ind.get("EMA20") or 0
-            ema50 = ind.get("EMA50") or 0
-            return {
-                "recommendation": analysis.summary.get("RECOMMENDATION", "NEUTRAL"),
-                "buy":            analysis.summary.get("BUY", 0),
-                "sell":           analysis.summary.get("SELL", 0),
-                "neutral":        analysis.summary.get("NEUTRAL", 0),
-                "rsi":            round(ind.get("RSI") or 50, 2),
-                "macd":           round(ind.get("MACD.macd") or 0, 4),
-                "ema_cross":      round((ema20 - ema50) / ema50 * 100, 2) if ema50 else 0.0,
-            }
-        except Exception:
-            return {
-                "recommendation": "NEUTRAL",
-                "buy": 0, "sell": 0, "neutral": 0,
-                "rsi": 50.0, "macd": 0.0, "ema_cross": 0.0,
-            }
+        pass
+    return {
+        "recommendation": "NEUTRAL",
+        "buy": 0, "sell": 0, "neutral": 0,
+        "rsi": 50.0, "macd": 0.0, "ema_cross": 0.0,
+    }
+
+
+def fetch_yahoo_quote(ticker: str) -> dict[str, Any]:
+    """Fetch real-time quote from Yahoo Finance via yahoo-finance-pp-cli."""
+    try:
+        result = subprocess.run(
+            [YF_CLI, "quote", "--symbols", ticker, "--json"],
+            capture_output=True, text=True, timeout=20
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            raw = json.loads(result.stdout)
+            # Handle nested: {results: {quoteResponse: {result: [...]}}}
+            d = {}
+            if isinstance(raw, dict) and "results" in raw:
+                qr = raw["results"].get("quoteResponse", {}).get("result", [])
+                if qr:
+                    d = qr[0]
+            elif isinstance(raw, list) and raw:
+                d = raw[0]
+            elif isinstance(raw, dict):
+                d = raw
+            if d:
+                return {
+                    "price":      float(d.get("regularMarketPrice") or 0),
+                    "change_pct": float(d.get("regularMarketChangePercent") or 0),
+                    "volume":     float(d.get("regularMarketVolume") or 0),
+                    "market_cap": float(d.get("marketCap") or 0),
+                    "52w_high":   float(d.get("fiftyTwoWeekHigh") or 0),
+                    "52w_low":    float(d.get("fiftyTwoWeekLow") or 0),
+                }
+    except Exception:
+        pass
+    return {}
 
 
 def fetch_earnings_surprise(ticker: str) -> list[dict[str, Any]]:
