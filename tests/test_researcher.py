@@ -3,20 +3,18 @@ from modules.researcher import fetch_exa_news, fetch_rss_news, fetch_x_mentions
 
 
 def test_fetch_exa_news_returns_list():
-    mock_exa = MagicMock()
-    mock_result = MagicMock()
-    mock_result.results = [
-        MagicMock(title="NVDA signs AI deal", url="https://example.com/1",
-                  published_date="2026-05-09", text="NVIDIA announced..."),
-    ]
-    mock_exa.search_and_contents.return_value = mock_result
-
-    with patch("modules.researcher.Exa", return_value=mock_exa):
+    import json
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = json.dumps([
+        {"title": "NVDA signs AI deal", "url": "https://example.com/1",
+         "date": "2026-05-09", "snippet": "NVIDIA announced...", "source": "google-news"}
+    ])
+    with patch("modules.researcher.subprocess.run", return_value=mock_proc):
         items = fetch_exa_news("NVIDIA", "NVDA", exa_api_key="fake")
-
     assert isinstance(items, list)
     assert items[0]["title"] == "NVDA signs AI deal"
-    assert items[0]["source"] == "exa"
+    assert items[0]["source"] == "google-news"
 
 
 def test_fetch_rss_news_no_crash_on_empty():
