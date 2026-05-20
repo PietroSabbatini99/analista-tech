@@ -107,6 +107,161 @@ def fetch_tv_analysis(ticker: str) -> dict[str, Any]:
     }
 
 
+# All field names verified against scanner.tradingview.com/america/scan
+TV_BATCH_COLUMNS = [
+    # Technicals
+    "Recommend.All", "Recommend.MA", "Recommend.Other",
+    "RSI", "MACD.macd", "MACD.signal",
+    "EMA20", "EMA50", "EMA200",
+    "close", "volume", "change", "market_cap_basic",
+    # Income Statement
+    "total_revenue",                   # Revenue TTM
+    "gross_profit",                    # Gross Profit TTM
+    "net_income",                      # Net Income TTM
+    "ebitda",                          # EBITDA TTM
+    "earnings_per_share_diluted_ttm",  # EPS Diluted TTM
+    # Balance Sheet
+    "total_assets",
+    "total_debt",
+    "total_equity_fq",                 # Shareholders' Equity
+    "cash_n_equivalents_fq",           # Cash & Equivalents
+    # Cash Flow
+    "free_cash_flow",                  # FCF TTM
+    "cash_f_operating_activities_fq",  # Operating Cash Flow
+    # Ratios
+    "price_earnings_ttm",              # P/E Trailing
+    "price_book_fq",                   # P/B
+    "enterprise_value_ebitda_ttm",     # EV/EBITDA
+    "debt_to_equity",                  # D/E Ratio
+    "return_on_equity",                # ROE %
+    "return_on_assets",                # ROA %
+    "price_revenue_ttm",               # P/S (Price/Revenue)
+    "current_ratio",                   # Current Ratio
+    "quick_ratio",                     # Quick Ratio
+    # Margins (%)
+    "gross_margin",                    # Gross Margin %
+    "operating_margin",                # Operating Margin %
+    "net_margin",                      # Net Margin %
+    # Analyst & Performance
+    "price_target_average",            # Analyst avg price target
+    "Perf.1M",                         # 1-month price performance %
+]
+
+
+def _tv_score_to_rec(score: float) -> str:
+    if score >= 0.5:  return "STRONG_BUY"
+    if score >= 0.1:  return "BUY"
+    if score > -0.1:  return "NEUTRAL"
+    if score > -0.5:  return "SELL"
+    return "STRONG_SELL"
+
+
+def _tv_rec_counts(score: float) -> tuple[int, int, int]:
+    return {
+        "STRONG_BUY":  (15, 1, 10),
+        "BUY":         (10, 3, 13),
+        "NEUTRAL":     (5,  5, 16),
+        "SELL":        (3,  10, 13),
+        "STRONG_SELL": (1,  15, 10),
+    }.get(_tv_score_to_rec(score), (5, 5, 16))
+
+
+def fetch_tv_batch(tickers: list[str], market: str = "america") -> dict[str, dict[str, Any]]:
+    """Fetch TradingView technicals + fundamentals for ALL tickers in ONE call.
+    Returns {TICKER: {all_fields}}.  Replaces the per-ticker fetch_tv_analysis loop."""
+    if not tickers:
+        return {}
+
+    def _norm(t: str) -> str:
+        return t.upper() if ":" in t else f"NASDAQ:{t.upper()}"
+
+    normalized = [_norm(t) for t in tickers]
+    payload = {"symbols": {"tickers": normalized}, "columns": TV_BATCH_COLUMNS}
+    try:
+        resp = requests.post(
+            f"https://scanner.tradingview.com/{market}/scan",
+            json=payload,
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent":   "Mozilla/5.0 (compatible; analista-tech/1.0)",
+                "Origin":       "https://www.tradingview.com",
+                "Referer":      "https://www.tradingview.com/",
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception:
+        return {}
+
+    cidx = {c: i for i, c in enumerate(TV_BATCH_COLUMNS)}
+
+    def _g(d: list, col: str) -> float:
+        i = cidx.get(col)
+        if i is None or i >= len(d) or d[i] is None:
+            return 0.0
+        try:   return float(d[i])
+        except: return 0.0
+
+    result: dict[str, dict[str, Any]] = {}
+    for item in data.get("data", []):
+        sym = item.get("s", "")
+        d   = item.get("d", [])
+        key = sym.split(":")[-1] if ":" in sym else sym
+
+        rec_score = _g(d, "Recommend.All")
+        ema20, ema50 = _g(d, "EMA20"), _g(d, "EMA50")
+        ema_cross = round((ema20 - ema50) / ema50 * 100, 2) if ema50 else 0.0
+        buy, sell, neutral = _tv_rec_counts(rec_score)
+
+        result[key] = {
+            # Technicals
+            "recommendation":  _tv_score_to_rec(rec_score),
+            "recommend_score": rec_score,
+            "buy": buy, "sell": sell, "neutral": neutral,
+            "rsi":         round(_g(d, "RSI"), 2),
+            "macd":        round(_g(d, "MACD.macd"), 4),
+            "macd_signal": round(_g(d, "MACD.signal"), 4),
+            "ema20": ema20, "ema50": ema50, "ema200": _g(d, "EMA200"),
+            "ema_cross": ema_cross,
+            "close": _g(d, "close"), "volume": _g(d, "volume"),
+            "change": _g(d, "change"),
+            "market_cap": _g(d, "market_cap_basic"),
+            # Income Statement
+            "total_revenue":   _g(d, "total_revenue"),
+            "gross_profit":    _g(d, "gross_profit"),
+            "net_income":      _g(d, "net_income"),
+            "ebitda":          _g(d, "ebitda"),
+            "eps_diluted_ttm": _g(d, "earnings_per_share_diluted_ttm"),
+            # Balance Sheet
+            "total_assets":  _g(d, "total_assets"),
+            "total_debt":    _g(d, "total_debt"),
+            "total_equity":  _g(d, "total_equity_fq"),
+            "total_cash":    _g(d, "cash_n_equivalents_fq"),
+            # Cash Flow
+            "free_cash_flow": _g(d, "free_cash_flow"),
+            "cash_from_ops":  _g(d, "cash_f_operating_activities_fq"),
+            # Ratios
+            "pe_ratio":       _g(d, "price_earnings_ttm"),
+            "price_to_book":  _g(d, "price_book_fq"),
+            "ev_ebitda":      _g(d, "enterprise_value_ebitda_ttm"),
+            "debt_to_equity": _g(d, "debt_to_equity"),
+            "roe":            _g(d, "return_on_equity"),
+            "roa":            _g(d, "return_on_assets"),
+            "price_to_sales": _g(d, "price_revenue_ttm"),
+            "current_ratio":  _g(d, "current_ratio"),
+            "quick_ratio":    _g(d, "quick_ratio"),
+            # Margins
+            "gross_margin":     _g(d, "gross_margin"),
+            "operating_margin": _g(d, "operating_margin"),
+            "net_margin":       _g(d, "net_margin"),
+            # Analyst & Performance
+            "analyst_target": _g(d, "price_target_average"),
+            "perf_1m":        _g(d, "Perf.1M"),
+        }
+    return result
+
+
 def fetch_yahoo_quote(ticker: str) -> dict[str, Any]:
     """Fetch real-time quote from Yahoo Finance via yahoo-finance-pp-cli."""
     try:

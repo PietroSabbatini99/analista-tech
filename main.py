@@ -10,7 +10,8 @@ import yaml
 from modules.db import init_db, get_connection
 from modules.universe import load_universe
 from modules.collector import (
-    fetch_financial_snapshot, fetch_edgar_filings, fetch_tv_analysis,
+    fetch_financial_snapshot, fetch_edgar_filings,
+    fetch_tv_analysis, fetch_tv_batch,
     fetch_earnings_calendar, fetch_insider_trades, fetch_institutional_holders,
     fetch_earnings_surprise,
     fetch_yahoo_trending,
@@ -65,22 +66,58 @@ def main():
     trending_set = set(fetch_yahoo_trending())
     log.info(f"Trending tickers: {sorted(trending_set)}")
 
-    # Pass 1: collect financials + TV (no Claude)
+    # ── TV batch: ONE call for all tickers (technicals + fundamentals) ────────
+    all_ticker_list = [c["ticker"] for c in companies]
+    log.info(f"Fetching TV batch for {len(all_ticker_list)} tickers...")
+    tv_batch = fetch_tv_batch(all_ticker_list)
+    log.info(f"TV batch returned {len(tv_batch)} tickers")
+
+    # Pass 1: collect yfinance-exclusive data (short interest, analyst targets,
+    # earnings calendar, insider trades, institutional holders, hist bars)
     financials = {}
     tv_cache   = {}
     for company in companies:
         ticker = company["ticker"]
         try:
             fin = fetch_financial_snapshot(ticker)
-            fin["name"]       = company["name"]
-            fin["sector"]     = company["sector"]
+            fin["name"]        = company["name"]
+            fin["sector"]      = company["sector"]
             fin["is_trending"] = ticker in trending_set
+
+            # Merge TV batch data — richer than yfinance for most fundamentals
+            tv = tv_batch.get(ticker, {})
+            if tv:
+                # Override yfinance fundamentals with TV data where available
+                if tv.get("total_revenue"):
+                    fin["total_revenue"]    = tv["total_revenue"]
+                    fin["gross_profit"]     = tv.get("gross_profit", 0)
+                    fin["net_income"]       = tv.get("net_income", 0)
+                    fin["ebitda"]           = tv.get("ebitda", 0)
+                    fin["eps_diluted"]      = tv.get("eps_diluted_ttm", 0)
+                if tv.get("gross_margin"):
+                    fin["gross_margin_tv"]  = tv["gross_margin"]
+                    fin["operating_margin"] = tv.get("operating_margin", 0)
+                    fin["net_margin"]       = tv.get("net_margin", 0)
+                if tv.get("roe"):
+                    fin["roe"]              = tv["roe"]
+                    fin["roa"]              = tv.get("roa", 0)
+                fin["ev_ebitda"]            = tv.get("ev_ebitda", 0)
+                fin["price_to_book"]        = tv.get("price_to_book", 0)
+                fin["current_ratio"]        = tv.get("current_ratio", 0)
+                fin["quick_ratio"]          = tv.get("quick_ratio", 0)
+                fin["free_cash_flow"]       = tv.get("free_cash_flow", 0)
+                fin["total_equity"]         = tv.get("total_equity", 0)
+                fin["tv_analyst_target"]    = tv.get("analyst_target", 0)
+                fin["perf_1m"]              = tv.get("perf_1m", 0)
+                if not fin.get("market_cap") and tv.get("market_cap"):
+                    fin["market_cap"]       = tv["market_cap"]
+
             fin.update(fetch_earnings_calendar(ticker))
             fin.update(fetch_insider_trades(company["name"]))
             fin.update(fetch_institutional_holders(ticker))
             fin["earnings_history"] = fetch_earnings_surprise(ticker)
             financials[ticker] = fin
-            tv_cache[ticker]   = fetch_tv_analysis(ticker)
+            tv_cache[ticker]   = tv  # already fetched — no extra call
         except Exception as e:
             log.warning(f"  {ticker} data error: {e}")
 
@@ -175,6 +212,21 @@ def main():
         scored["tv_ema_cross"]     = tv.get("ema_cross", 0.0)
         scored["tv_buy"]           = tv.get("buy", 0)
         scored["cap_tier"]         = financial.get("cap_tier", "large")
+        # TV fundamentals (batch)
+        scored["gross_margin"]     = tv.get("gross_margin", 0.0)
+        scored["operating_margin"] = tv.get("operating_margin", 0.0)
+        scored["net_margin"]       = tv.get("net_margin", 0.0)
+        scored["roe"]              = tv.get("roe", 0.0)
+        scored["roa"]              = tv.get("roa", 0.0)
+        scored["ev_ebitda"]        = tv.get("ev_ebitda", 0.0)
+        scored["price_to_book"]    = tv.get("price_to_book", 0.0)
+        scored["free_cash_flow"]   = tv.get("free_cash_flow", 0.0)
+        scored["total_revenue"]    = tv.get("total_revenue", 0.0)
+        scored["net_income"]       = tv.get("net_income", 0.0)
+        scored["ebitda"]           = tv.get("ebitda", 0.0)
+        scored["debt_to_equity"]   = tv.get("debt_to_equity", 0.0)
+        scored["current_ratio"]    = tv.get("current_ratio", 0.0)
+        scored["perf_1m"]          = tv.get("perf_1m", 0.0)
         scored["accumulation"]     = financial.get("accumulation", False)
         scored["price_change_20"]  = financial.get("price_change_20", 0.0)
         scored["tv_sell"]          = tv.get("sell", 0)

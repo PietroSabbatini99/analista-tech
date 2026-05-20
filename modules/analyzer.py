@@ -16,14 +16,14 @@ You are a quantitative equity analyst specializing in AI/semiconductor stocks.
 Company: {name} ({ticker})
 
 FINANCIAL DATA:
-- Revenue Growth YoY: {revenue_growth:.1%}
-- Gross Margin: {gross_margin:.1%}
-- Total Cash: ${total_cash:,.0f}
-- Price/Sales: {price_to_sales:.1f}x
-- Market Cap: ${market_cap:,.0f}
-- P/E Trailing: {trailing_pe:.1f}x (sector avg: {sector_avg_pe:.1f}x)
-- P/E Forward: {forward_pe:.1f}x
-- Cap Tier: {cap_tier}
+- Cap Tier: {cap_tier} | Market Cap: ${market_cap:,.0f}
+- Revenue (TTM): ${total_revenue:,.0f} | Net Income: ${net_income:,.0f}
+- EBITDA: ${ebitda:,.0f} | Free Cash Flow: ${free_cash_flow:,.0f}
+- Gross Margin: {gross_margin:.1f}% | Operating Margin: {operating_margin:.1f}% | Net Margin: {net_margin:.1f}%
+- ROE: {roe:.1f}% | ROA: {roa:.1f}% | D/E: {debt_to_equity:.2f}x
+- P/E: {trailing_pe:.1f}x (sector avg: {sector_avg_pe:.1f}x) | EV/EBITDA: {ev_ebitda:.1f}x | P/B: {price_to_book:.1f}x
+- P/S: {price_to_sales:.1f}x | Current Ratio: {current_ratio:.2f}
+- 1M Price Performance: {perf_1m:+.1f}%
 - Price Momentum (20d vs 60d avg): {momentum_20_60:+.1%}
 - Price Change (20d): {price_change_20:+.1%}
 - Volume Spike (20d vs 60d avg): {volume_spike:+.1%}
@@ -91,13 +91,27 @@ def score_company(
         name=financial.get("name", financial["ticker"]),
         ticker=financial["ticker"],
         revenue_growth=financial["revenue_growth"],
-        gross_margin=financial["gross_margin"],
-        total_cash=financial["total_cash"],
-        price_to_sales=financial["price_to_sales"],
-        market_cap=financial["market_cap"],
+        total_cash=financial.get("total_cash", 0.0),
+        price_to_sales=financial.get("price_to_sales", 0.0),
+        market_cap=financial.get("market_cap", 0.0),
         trailing_pe=financial.get("trailing_pe", 0.0),
         forward_pe=financial.get("forward_pe", 0.0),
         sector_avg_pe=financial.get("sector_avg_pe", 0.0),
+        # TV batch fundamentals
+        total_revenue=financial.get("total_revenue", 0.0),
+        net_income=financial.get("net_income", 0.0),
+        ebitda=financial.get("ebitda", 0.0),
+        free_cash_flow=financial.get("free_cash_flow", 0.0),
+        gross_margin=financial.get("gross_margin_tv", financial.get("gross_margin", 0.0)),
+        operating_margin=financial.get("operating_margin", 0.0),
+        net_margin=financial.get("net_margin", 0.0),
+        roe=financial.get("roe", 0.0),
+        roa=financial.get("roa", 0.0),
+        debt_to_equity=financial.get("debt_to_equity", 0.0),
+        ev_ebitda=financial.get("ev_ebitda", 0.0),
+        price_to_book=financial.get("price_to_book", 0.0),
+        current_ratio=financial.get("current_ratio", 0.0),
+        perf_1m=financial.get("perf_1m", 0.0),
         analyst_count=financial.get("analyst_count", 0),
         analyst_target=financial.get("analyst_target", 0.0),
         analyst_upside=financial.get("analyst_upside", 0.0),
