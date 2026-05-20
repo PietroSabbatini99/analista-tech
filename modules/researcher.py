@@ -1,18 +1,50 @@
+import json
+import subprocess
 import feedparser
 from exa_py import Exa
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+GN_CLI = "/Users/pietrosabbatini/go/bin/google-news-pp-cli"
+
+
+def fetch_google_news(company_name: str, ticker: str, days: int = 7) -> list[dict[str, Any]]:
+    """Fetch news via google-news-pp-cli — free, no API key needed."""
+    try:
+        result = subprocess.run(
+            [GN_CLI, "stock", ticker, "--days", str(days), "--json"],
+            capture_output=True, text=True, timeout=25
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            items = json.loads(result.stdout)
+            return [
+                {
+                    "title":   i.get("title", ""),
+                    "url":     i.get("url", ""),
+                    "date":    i.get("date", ""),
+                    "snippet": i.get("snippet", "")[:300],
+                    "source":  "google-news",
+                }
+                for i in items if i.get("title")
+            ][:8]
+    except Exception:
+        pass
+    return []
+
 
 def fetch_exa_news(company_name: str, ticker: str, exa_api_key: str) -> list[dict[str, Any]]:
-    exa = Exa(api_key=exa_api_key)
-    query = f'"{company_name}" OR "{ticker}" partnership OR revenue OR AI OR acquisition OR earnings'
-    start_date = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    """News: Google News CLI primary (free), Exa fallback (uses balance)."""
+    items = fetch_google_news(company_name, ticker)
+    if items:
+        return items
+    if not exa_api_key:
+        return []
     try:
+        exa = Exa(api_key=exa_api_key)
+        query = f'"{company_name}" OR "{ticker}" partnership OR revenue OR AI OR acquisition OR earnings'
+        start_date = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
         result = exa.search_and_contents(
-            query,
-            num_results=5,
-            start_published_date=start_date,
+            query, num_results=5, start_published_date=start_date,
             text={"max_characters": 300},
         )
         return [
