@@ -53,6 +53,22 @@ def init_db(db_path: str) -> None:
             tv_ema_cross        REAL    DEFAULT 0,
             tv_buy              INTEGER DEFAULT 0,
             tv_sell             INTEGER DEFAULT 0,
+            earnings_history    TEXT,
+            is_trending         INTEGER DEFAULT 0,
+            gross_margin        REAL    DEFAULT 0,
+            operating_margin    REAL    DEFAULT 0,
+            net_margin          REAL    DEFAULT 0,
+            roe                 REAL    DEFAULT 0,
+            roa                 REAL    DEFAULT 0,
+            ev_ebitda           REAL    DEFAULT 0,
+            price_to_book       REAL    DEFAULT 0,
+            free_cash_flow      REAL    DEFAULT 0,
+            total_revenue       REAL    DEFAULT 0,
+            net_income          REAL    DEFAULT 0,
+            ebitda              REAL    DEFAULT 0,
+            debt_to_equity      REAL    DEFAULT 0,
+            current_ratio       REAL    DEFAULT 0,
+            perf_1m             REAL    DEFAULT 0,
             UNIQUE(ticker, date)
         );
 
@@ -110,6 +126,24 @@ def init_db(db_path: str) -> None:
         ("tv_ema_cross",        "REAL DEFAULT 0"),
         ("tv_buy",              "INTEGER DEFAULT 0"),
         ("tv_sell",             "INTEGER DEFAULT 0"),
+        # earnings + trending (missing from previous migration)
+        ("earnings_history",    "TEXT"),
+        ("is_trending",         "INTEGER DEFAULT 0"),
+        # TV batch fundamentals
+        ("gross_margin",        "REAL DEFAULT 0"),
+        ("operating_margin",    "REAL DEFAULT 0"),
+        ("net_margin",          "REAL DEFAULT 0"),
+        ("roe",                 "REAL DEFAULT 0"),
+        ("roa",                 "REAL DEFAULT 0"),
+        ("ev_ebitda",           "REAL DEFAULT 0"),
+        ("price_to_book",       "REAL DEFAULT 0"),
+        ("free_cash_flow",      "REAL DEFAULT 0"),
+        ("total_revenue",       "REAL DEFAULT 0"),
+        ("net_income",          "REAL DEFAULT 0"),
+        ("ebitda",              "REAL DEFAULT 0"),
+        ("debt_to_equity",      "REAL DEFAULT 0"),
+        ("current_ratio",       "REAL DEFAULT 0"),
+        ("perf_1m",             "REAL DEFAULT 0"),
     ]
     for col, col_type in new_cols:
         try:

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import json
 import logging
 from datetime import date, datetime
 from pathlib import Path
@@ -243,8 +244,12 @@ def main():
                 analyst_target,analyst_upside,analyst_count,
                 short_percent,short_ratio,next_earnings,days_until_earnings,
                 insider_filings_30d,institutional_pct,top_holder,
-                tv_recommendation,tv_rsi,tv_macd,tv_ema_cross,tv_buy,tv_sell)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                tv_recommendation,tv_rsi,tv_macd,tv_ema_cross,tv_buy,tv_sell,
+                earnings_history,is_trending,
+                gross_margin,operating_margin,net_margin,
+                roe,roa,ev_ebitda,price_to_book,free_cash_flow,
+                total_revenue,net_income,ebitda,debt_to_equity,current_ratio,perf_1m)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (ticker, today,
              scored["score_revenue"], scored["score_margins"], scored["score_news"],
              scored["score_influencer"], scored["score_momentum"], scored["total_score"],
@@ -262,7 +267,17 @@ def main():
              scored.get("top_holder", "N/A"),
              scored.get("tv_recommendation", "N/A"), scored.get("tv_rsi", 50.0),
              scored.get("tv_macd", 0.0), scored.get("tv_ema_cross", 0.0),
-             scored.get("tv_buy", 0), scored.get("tv_sell", 0)),
+             scored.get("tv_buy", 0), scored.get("tv_sell", 0),
+             json.dumps(scored.get("earnings_history", [])),
+             int(scored.get("is_trending", False)),
+             scored.get("gross_margin", 0.0), scored.get("operating_margin", 0.0),
+             scored.get("net_margin", 0.0),
+             scored.get("roe", 0.0), scored.get("roa", 0.0),
+             scored.get("ev_ebitda", 0.0), scored.get("price_to_book", 0.0),
+             scored.get("free_cash_flow", 0.0),
+             scored.get("total_revenue", 0.0), scored.get("net_income", 0.0),
+             scored.get("ebitda", 0.0), scored.get("debt_to_equity", 0.0),
+             scored.get("current_ratio", 0.0), scored.get("perf_1m", 0.0)),
         )
         conn.commit()
         conn.close()
