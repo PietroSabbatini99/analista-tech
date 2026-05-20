@@ -227,3 +227,56 @@ def fetch_edgar_filings(company_name: str, days: int = 14) -> list[dict[str, Any
         }
         for h in hits[:5]
     ]
+
+
+def fetch_yahoo_trending(region: str = "US") -> list[str]:
+    """Return list of trending tickers on Yahoo Finance right now."""
+    try:
+        result = subprocess.run(
+            [YF_CLI, "trending", region, "--json"],
+            capture_output=True, text=True, timeout=15
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            raw = json.loads(result.stdout)
+            quotes = (raw.get("results", {})
+                        .get("finance", {})
+                        .get("result", [{}])[0]
+                        .get("quotes", []))
+            return [q["symbol"] for q in quotes if "symbol" in q]
+    except Exception:
+        pass
+    return []
+
+
+def fetch_yahoo_insights(ticker: str) -> dict[str, Any]:
+    """Fetch Yahoo Finance insights: technical events, valuation signals, research."""
+    try:
+        result = subprocess.run(
+            [YF_CLI, "insights", "--symbols", ticker, "--json"],
+            capture_output=True, text=True, timeout=20
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            raw = json.loads(result.stdout)
+            # Navigate nested structure
+            data = (raw.get("results", {})
+                       .get("finance", {})
+                       .get("result", {})
+                       .get(ticker, {}))
+            if not data:
+                # try flat structure
+                data = raw if isinstance(raw, dict) else {}
+
+            tech = data.get("instrumentInfo", {}).get("technicalEvents", {})
+            val  = data.get("instrumentInfo", {}).get("valuation", {})
+            sig  = data.get("upsell", {})
+
+            return {
+                "short_term_outlook":  tech.get("shortTermOutlook", {}).get("direction", ""),
+                "mid_term_outlook":    tech.get("intermediateTermOutlook", {}).get("direction", ""),
+                "long_term_outlook":   tech.get("longTermOutlook", {}).get("direction", ""),
+                "valuation_description": val.get("description", ""),
+                "valuation_discount":  val.get("discount", ""),
+            }
+    except Exception:
+        pass
+    return {}

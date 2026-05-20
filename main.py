@@ -13,6 +13,7 @@ from modules.collector import (
     fetch_financial_snapshot, fetch_edgar_filings, fetch_tv_analysis,
     fetch_earnings_calendar, fetch_insider_trades, fetch_institutional_holders,
     fetch_earnings_surprise,
+    fetch_yahoo_trending,
 )
 from modules.researcher import fetch_exa_news, fetch_rss_news, fetch_x_mentions
 from modules.analyzer import score_company, generate_narrative
@@ -60,6 +61,10 @@ def main():
 
     log.info(f"Pipeline start — {today} — {len(companies)} companies")
 
+    # Fetch trending tickers once (retail attention signal)
+    trending_set = set(fetch_yahoo_trending())
+    log.info(f"Trending tickers: {sorted(trending_set)}")
+
     # Pass 1: collect financials + TV (no Claude)
     financials = {}
     tv_cache   = {}
@@ -67,8 +72,9 @@ def main():
         ticker = company["ticker"]
         try:
             fin = fetch_financial_snapshot(ticker)
-            fin["name"]   = company["name"]
-            fin["sector"] = company["sector"]
+            fin["name"]       = company["name"]
+            fin["sector"]     = company["sector"]
+            fin["is_trending"] = ticker in trending_set
             fin.update(fetch_earnings_calendar(ticker))
             fin.update(fetch_insider_trades(company["name"]))
             fin.update(fetch_institutional_holders(ticker))
@@ -173,6 +179,7 @@ def main():
         scored["price_change_20"]  = financial.get("price_change_20", 0.0)
         scored["tv_sell"]          = tv.get("sell", 0)
         scored["earnings_history"] = financial.get("earnings_history", [])
+        scored["is_trending"]      = financial.get("is_trending", False)
 
         conn = get_connection(DB_PATH)
         conn.execute(

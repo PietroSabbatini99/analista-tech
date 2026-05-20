@@ -28,6 +28,7 @@ FINANCIAL DATA:
 - Price Change (20d): {price_change_20:+.1%}
 - Volume Spike (20d vs 60d avg): {volume_spike:+.1%}
 - Accumulation Signal: {accumulation} (price flat + volume rising = smart money building)
+- Trending on Yahoo Finance: {is_trending} (retail attention — currently being searched)
 
 ANALYST CONSENSUS ({analyst_count} analysts):
 - Target Price: ${analyst_target:.2f} | Upside vs current: {analyst_upside:+.1f}%
@@ -108,6 +109,7 @@ def score_company(
         institutional_pct=financial.get("institutional_pct", 0.0),
         top_holder=financial.get("top_holder") or "N/A",
         cap_tier=financial.get("cap_tier", "large"),
+        is_trending=financial.get("is_trending", False),
         momentum_20_60=financial["momentum_20_60"],
         price_change_20=financial.get("price_change_20", 0.0),
         volume_spike=financial["volume_spike"],
