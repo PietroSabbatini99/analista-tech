@@ -319,13 +319,19 @@ def fetch_earnings_surprise(ticker: str) -> list[dict[str, Any]]:
 
 def fetch_earnings_calendar(ticker: str) -> dict[str, Any]:
     try:
+        import datetime as _dt
         cal = yf.Ticker(ticker).calendar
         if cal and "Earnings Date" in cal:
             dates = cal["Earnings Date"]
             if dates:
                 next_dt = dates[0]
-                days_until = (next_dt.date() - datetime.now(timezone.utc).date()).days
-                return {"next_earnings": str(next_dt.date()), "days_until_earnings": days_until}
+                # dates[0] is datetime.date or datetime.datetime — handle both
+                if isinstance(next_dt, _dt.datetime):
+                    next_date = next_dt.date()
+                else:
+                    next_date = next_dt          # already datetime.date
+                days_until = (next_date - datetime.now(timezone.utc).date()).days
+                return {"next_earnings": str(next_date), "days_until_earnings": days_until}
     except Exception:
         pass
     return {"next_earnings": None, "days_until_earnings": None}
