@@ -294,6 +294,16 @@ def main():
     generate_md_report(all_scores, str(report_dir / "report.md"))
     save_alerts_json(all_scores, str(report_dir / "alerts.json"), threshold)
 
+    # ── ChromaDB ingestion ────────────────────────────────────────────────
+    try:
+        from modules.memory import Memory
+        mem = Memory(str(BASE_DIR / "data" / "chromadb"))
+        for s in all_scores:
+            mem.add_score(s["ticker"], today, s)
+        log.info(f"ChromaDB: ingested {len(all_scores)} scores")
+    except Exception as e:
+        log.warning(f"ChromaDB ingestion failed: {e}")
+
     for s in all_scores:
         if s["total_score"] >= threshold:
             send_macos_notification(s["ticker"], s["total_score"], s.get("reasoning", ""))
