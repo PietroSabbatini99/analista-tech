@@ -11,3 +11,8 @@ launchctl load "$LAUNCH_AGENTS/com.analista.tech.xscan.plist"
 
 echo "Jobs loaded. Daily 07:00, X scan 08:00-22:00 every 2h."
 launchctl list | grep analista
+cp "$PROJECT_DIR/launchd/com.analista.agent.plist"  "$LAUNCH_AGENTS/"
+cp "$PROJECT_DIR/launchd/com.analista.ngrok.plist"   "$LAUNCH_AGENTS/"
+launchctl load "$LAUNCH_AGENTS/com.analista.agent.plist"
+launchctl load "$LAUNCH_AGENTS/com.analista.ngrok.plist"
+echo "Agent + ngrok loaded."

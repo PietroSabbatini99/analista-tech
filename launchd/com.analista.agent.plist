@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.analista.agent</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/pietrosabbatini/Desktop/Analista Tech/.venv/bin/python3</string>
+        <string>-m</string><string>uvicorn</string>
+        <string>agent:app</string>
+        <string>--host</string><string>0.0.0.0</string>
+        <string>--port</string><string>8080</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/pietrosabbatini/Desktop/Analista Tech</string>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><true/>
+    <key>StandardOutPath</key>
+    <string>/Users/pietrosabbatini/Desktop/Analista Tech/data/agent-server.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/pietrosabbatini/Desktop/Analista Tech/data/agent-server.error.log</string>
+</dict>
+</plist>
