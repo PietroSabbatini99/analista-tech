@@ -2197,5 +2197,125 @@
       })();
     })();
   </script>
+
+  <!-- ── Agent Chat Drawer ─────────────────────────────────────────── -->
+  <style>
+    #agent-fab{
+      position:fixed; bottom:28px; right:28px; z-index:900;
+      width:52px; height:52px; border-radius:16px; border:0;
+      background:linear-gradient(135deg,#6366f1,#a855f7);
+      color:#fff; font-size:22px; cursor:pointer;
+      display:grid; place-items:center;
+      box-shadow:0 4px 24px -4px rgba(99,102,241,0.5);
+      transition:transform 200ms cubic-bezier(0.23,1,0.32,1),
+                 box-shadow 200ms cubic-bezier(0.23,1,0.32,1);
+    }
+    @media(hover:hover) and (pointer:fine){
+      #agent-fab:hover{transform:translateY(-2px);
+        box-shadow:0 8px 32px -4px rgba(99,102,241,0.65);}
+    }
+    #agent-fab:active{transform:scale(0.93);}
+    #agent-fab .fab-label{
+      position:absolute; right:60px; white-space:nowrap;
+      font-family:'Inter',sans-serif; font-size:12px; font-weight:600;
+      background:rgba(17,17,24,0.95); border:1px solid #1e1e2e;
+      padding:4px 10px; border-radius:6px; color:#e4e4ea;
+      opacity:0; pointer-events:none;
+      transition:opacity 150ms cubic-bezier(0.23,1,0.32,1);
+    }
+    @media(hover:hover) and (pointer:fine){
+      #agent-fab:hover .fab-label{opacity:1;}
+    }
+    #agent-drawer{
+      position:fixed; top:0; right:0; bottom:0; z-index:901;
+      width:min(480px,100vw);
+      transform:translateX(100%);
+      transition:transform 320ms cubic-bezier(0.23,1,0.32,1);
+      box-shadow:-8px 0 48px rgba(0,0,0,0.5);
+      background:#0a0a0f; border-left:1px solid #1e1e2e;
+      display:flex; flex-direction:column;
+    }
+    #agent-drawer.open{ transform:translateX(0); }
+    #drawer-header{
+      height:48px; padding:0 16px;
+      display:flex; align-items:center; gap:10px;
+      border-bottom:1px solid #1e1e2e;
+      background:rgba(17,17,24,0.9);
+      flex-shrink:0;
+    }
+    #drawer-header .dh-logo{
+      width:26px; height:26px; border-radius:7px;
+      background:linear-gradient(135deg,#6366f1,#a855f7);
+      display:grid; place-items:center;
+      font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700;
+    }
+    #drawer-header span{
+      font-family:'Inter',sans-serif; font-size:13px; font-weight:600;
+      color:#e4e4ea; flex:1;
+    }
+    #drawer-close{
+      width:28px; height:28px; border-radius:7px; border:1px solid #1e1e2e;
+      background:transparent; color:#8a8a9a; cursor:pointer;
+      display:grid; place-items:center; font-size:16px;
+      transition:transform 160ms cubic-bezier(0.23,1,0.32,1),
+                 color 160ms cubic-bezier(0.23,1,0.32,1);
+    }
+    @media(hover:hover) and (pointer:fine){ #drawer-close:hover{color:#e4e4ea;} }
+    #drawer-close:active{transform:scale(0.9);}
+    #agent-iframe{ flex:1; border:0; background:#0a0a0f; }
+    #drawer-scrim{
+      position:fixed; inset:0; z-index:899;
+      background:rgba(0,0,0,0.4); opacity:0; pointer-events:none;
+      transition:opacity 320ms cubic-bezier(0.23,1,0.32,1);
+    }
+    #drawer-scrim.visible{opacity:1; pointer-events:auto;}
+    @media(prefers-reduced-motion:reduce){
+      #agent-drawer,#agent-fab,#drawer-scrim{transition:none !important;}
+    }
+  </style>
+
+  <button id="agent-fab" title="Apri Agente (⌘K)" onclick="openAgentDrawer()">
+    ⚡<span class="fab-label">Chiedi all'Agente (⌘K)</span>
+  </button>
+  <div id="drawer-scrim" onclick="closeAgentDrawer()"></div>
+  <div id="agent-drawer">
+    <div id="drawer-header">
+      <div class="dh-logo">AI</div>
+      <span>Analista Tech — Agente</span>
+      <button id="drawer-close" onclick="closeAgentDrawer()">✕</button>
+    </div>
+    <iframe id="agent-iframe" src="" title="Agent Chat"></iframe>
+  </div>
+
+  <script>
+    (function(){
+      const AGENT_URL = 'http://localhost:8080';
+      const drawer = document.getElementById('agent-drawer');
+      const scrim  = document.getElementById('drawer-scrim');
+      const iframe = document.getElementById('agent-iframe');
+      let loaded   = false;
+
+      window.openAgentDrawer = function(ticker) {
+        if (!loaded) {
+          iframe.src = ticker ? `${AGENT_URL}/?ticker=${encodeURIComponent(ticker)}` : `${AGENT_URL}/`;
+          loaded = true;
+        } else if (ticker && !iframe.src.includes(ticker)) {
+          iframe.src = `${AGENT_URL}/?ticker=${encodeURIComponent(ticker)}`;
+        }
+        drawer.classList.add('open');
+        scrim.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+      };
+      window.closeAgentDrawer = function() {
+        drawer.classList.remove('open');
+        scrim.classList.remove('visible');
+        document.body.style.overflow = '';
+      };
+      document.addEventListener('keydown', e => {
+        if ((e.metaKey||e.ctrlKey) && e.key==='k') { e.preventDefault(); drawer.classList.contains('open') ? closeAgentDrawer() : openAgentDrawer(); }
+        if (e.key==='Escape') closeAgentDrawer();
+      });
+    })();
+  </script>
 </body>
 </html>
